@@ -1,0 +1,53 @@
+const dotenv = require('dotenv')
+const express = require('express');
+const morgan = require('morgan');
+const { engine } = require('express-handlebars');
+const passport = require('passport');
+const session = require('express-session');
+const path = require('path');
+const app = express();
+
+// dotenv config
+dotenv.config({ path: './src/config/.env' });
+
+// passport config 
+require('./src/config/passport')(passport);
+
+const connectDB = require('./src/db/connect');
+// import routes
+const router = require('./src/routes');
+const authRouter = require('./src/routes/auth');
+
+// app static file 
+app.use(express.static(path.join(__dirname,'./src/public')));
+
+/// express-handlebar engine 
+app.engine('.hbs', engine({
+    extname: '.hbs',
+    defaultLayout: 'main',
+}));
+app.set('view engine', 'hbs');
+app.set('views', path.join(__dirname, './src/views'));
+app.use(session({
+    secret: 'keyboard cat',
+    resave: false,
+    saveUninitialized: false,
+  }))
+/// passport middleware 
+app.use(passport.initialize());
+app.use(passport.session());
+// express - session middleware 
+if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+};
+
+/// router 
+app.use('/auth', authRouter);
+app.use('/', router);
+
+
+const PORT = process.env.PORT || 3000;
+
+connectDB(process.env.MONGO_URL);
+
+app.listen(PORT, () => console.log(`App running at http://localhost:${PORT}`));
