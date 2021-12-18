@@ -5,6 +5,8 @@ const { engine } = require('express-handlebars');
 const passport = require('passport');
 const session = require('express-session');
 const path = require('path');
+const mongoose = require('mongoose');
+const MongoStore = require('connect-mongo');
 const app = express();
 
 // dotenv config
@@ -28,11 +30,16 @@ app.engine('.hbs', engine({
 }));
 app.set('view engine', 'hbs');
 app.set('views', path.join(__dirname, './src/views'));
-app.use(session({
-    secret: 'keyboard cat',
-    resave: false,
-    saveUninitialized: false,
-  }))
+
+// Sessions
+app.use(
+    session({
+      secret: 'keyboard cat',
+      resave: false,
+      saveUninitialized: false,
+      store: MongoStore.create({ mongoUrl: process.env.MONGO_URL }),
+    })
+  )
 /// passport middleware 
 app.use(passport.initialize());
 app.use(passport.session());
