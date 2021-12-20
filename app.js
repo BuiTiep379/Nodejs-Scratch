@@ -16,15 +16,21 @@ dotenv.config({ path: './src/config/.env' });
 require('./src/config/passport')(passport);
 
 const connectDB = require('./src/db/connect');
+
+const { formatDate } = require('./src/helper/hbs');
 // import routes
 const router = require('./src/routes');
 const authRouter = require('./src/routes/auth');
+const storyRouter = require('./src/routes/story');
 
 // app static file 
 app.use(express.static(path.join(__dirname,'./src/public')));
 
 /// express-handlebar engine 
 app.engine('.hbs', engine({
+  helpers: {
+    formatDate
+  },
     extname: '.hbs',
     defaultLayout: 'main',
 }));
@@ -43,12 +49,15 @@ app.use(
 /// passport middleware 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 // express - session middleware 
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
 };
 
 /// router 
+app.use('/stories', storyRouter);
 app.use('/auth', authRouter);
 app.use('/', router);
 
